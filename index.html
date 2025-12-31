@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +20,13 @@
     
 <body>
   <h1>Tabela da Graça</h1>
-  <canvas id="graficoPizza" width="400" height="400"></canvas>
+<label for="mes">Mês:</label>
+<select id="mes"></select>
+
+<div class="grafico-container">
+  <canvas id="graficoPizza"></canvas>
+</div>
+
   <div style="overflow-x: auto; padding-bottom: 8px;">
     <table id="tabela"></table>
   </div>
@@ -29,82 +37,109 @@
   <script>
 const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSLBYRao13AJeVkpTtyj-lwqefuQIuVLVchzbERRobSrZ1AwpHh7Cp_KA-QA-f0dNIU1MfV5emaUZua/pub?gid=0&single=true&output=csv';
 
+let dadosPorMes = {};
+let grafico;
+
 fetch(url)
-  .then(response => response.text())
-  .then(data => {
-    const linhas = data.trim().split('\n').map(l => l.split(','));
-    const tabela = document.getElementById('tabela');
+  .then(r => r.text())
+  .then(csv => {
+    const linhas = csv.trim().split('\n').map(l => l.split(','));
+    montarTabela(linhas);
+    processarDados(linhas);
+    montarSelectMes();
+  });
 
-    let agua = 0;
-    let coca = 0;
-    let ambos = 0;
-    let nenhum = 0;
+function montarTabela(linhas) {
+  const tabela = document.getElementById('tabela');
 
-    linhas.forEach((linha, i) => {
-      const tr = document.createElement('tr');
+  linhas.forEach((linha, i) => {
+    const tr = document.createElement('tr');
 
-      if (i > 0) {
-        const aguaVal = parseInt(linha[1]) || 0;
-        const cocaVal = parseInt(linha[2]) || 0;
+    linha.forEach(celula => {
+      const el = document.createElement(i === 0 ? 'th' : 'td');
+      const v = celula.trim().toLowerCase();
 
-        if (aguaVal > 0 && cocaVal > 0) ambos++;
-        else if (aguaVal > 0) agua++;
-        else if (cocaVal > 0) coca++;
-        else nenhum++;
+      if (i > 0 && (v === 'true' || v === 'false' || v === 'sim' || v === 'não')) {
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = v === 'true' || v === 'sim';
+        cb.disabled = true;
+        el.appendChild(cb);
+      } else {
+        el.textContent = celula;
       }
-
-      linha.forEach(celula => {
-        const el = document.createElement(i === 0 ? 'th' : 'td');
-        const valor = celula.trim().toLowerCase();
-
-        const ehBooleano =
-          valor === 'true' || valor === 'false' ||
-          valor === 'sim' || valor === 'não';
-
-        if (i > 0 && ehBooleano) {
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.checked = valor === 'true' || valor === 'sim';
-          checkbox.disabled = true;
-          el.appendChild(checkbox);
-        } else {
-          el.textContent = celula;
-        }
-
-        tr.appendChild(el);
-      });
-
-      tabela.appendChild(tr);
+      tr.appendChild(el);
     });
 
-    criarGrafico(agua, coca, ambos, nenhum);
-  })
-  .catch(error => console.error('Erro ao carregar planilha:', error));
+    tabela.appendChild(tr);
+  });
+}
 
-function criarGrafico(agua, coca, ambos, nenhum) {
-  const ctx = document.getElementById('graficoPizza');
+function processarDados(linhas) {
+  linhas.slice(1).forEach(l => {
+    const [data, agua, coca] = l;
+    if (!data) return;
 
-  new Chart(ctx, {
+    const [dia, mes, ano] = data.split('/');
+    const chaveMes = `${mes}/${ano}`;
+
+    if (!dadosPorMes[chaveMes]) {
+      dadosPorMes[chaveMes] = { agua: 0, coca: 0, ambos: 0, nenhum: 0 };
+    }
+
+    const a = parseInt(agua) || 0;
+    const c = parseInt(coca) || 0;
+
+    if (a > 0 && c > 0) dadosPorMes[chaveMes].ambos++;
+    else if (a > 0) dadosPorMes[chaveMes].agua++;
+    else if (c > 0) dadosPorMes[chaveMes].coca++;
+    else dadosPorMes[chaveMes].nenhum++;
+  });
+}
+
+function montarSelectMes() {
+  const select = document.getElementById('mes');
+
+  Object.keys(dadosPorMes).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    select.appendChild(opt);
+  });
+
+  select.addEventListener('change', () => atualizarGrafico(select.value));
+  atualizarGrafico(select.value);
+}
+
+function atualizarGrafico(mes) {
+  const d = dadosPorMes[mes];
+
+  if (grafico) grafico.destroy();
+
+  grafico = new Chart(document.getElementById('graficoPizza'), {
     type: 'pie',
     data: {
       labels: ['Água', 'Coca', 'Água + Coca', 'Nenhum'],
       datasets: [{
-        data: [agua, coca, ambos, nenhum],
-        backgroundColor: [
-          '#4FC3F7',
-          '#E57373',
-          '#FFD54F',
-          '#BDBDBD'
-        ]
+        data: [d.agua, d.coca, d.ambos, d.nenhum],
+        backgroundColor: ['#4FC3F7', '#E57373', '#FFD54F', '#BDBDBD']
       }]
     },
     options: {
       plugins: {
-        legend: {
-          position: 'bottom'
+        legend: { position: 'bottom' },
+        datalabels: {
+          formatter: (value, ctx) => {
+            const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+            if (!value) return '';
+            return `${Math.round(value / total * 100)}%`;
+          },
+          color: '#000',
+          font: { weight: 'bold' }
         }
       }
-    }
+    },
+    plugins: [ChartDataLabels]
   });
 }
 </script>
