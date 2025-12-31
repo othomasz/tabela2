@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+    
+  <title>Tabela da Graça ;)</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <link rel="apple-touch-icon" href="images/icon-192.png">
+  <meta name="theme-color" content="#785C47">
+</head>
+    
+<body>
+  <h1>Tabela da Graça</h1>
+  <canvas id="graficoPizza" width="400" height="400"></canvas>
+  <div style="overflow-x: auto; padding-bottom: 8px;">
+    <table id="tabela"></table>
+  </div>
+  <p>
+      <a style="padding-right: 8px" href="https://othomasz.github.io/">Página Inicial</a>
+      <a href="https://docs.google.com/spreadsheets/d/16EevIxeJqb4657oLH40PoqmKXsolXfj7l4VCBk2LUB8">Planilha</a>
+  </p>
+  <script>
+const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSLBYRao13AJeVkpTtyj-lwqefuQIuVLVchzbERRobSrZ1AwpHh7Cp_KA-QA-f0dNIU1MfV5emaUZua/pub?gid=0&single=true&output=csv';
+
+fetch(url)
+  .then(response => response.text())
+  .then(data => {
+    const linhas = data.trim().split('\n').map(l => l.split(','));
+    const tabela = document.getElementById('tabela');
+
+    let agua = 0;
+    let coca = 0;
+    let ambos = 0;
+    let nenhum = 0;
+
+    linhas.forEach((linha, i) => {
+      const tr = document.createElement('tr');
+
+      if (i > 0) {
+        const aguaVal = parseInt(linha[1]) || 0;
+        const cocaVal = parseInt(linha[2]) || 0;
+
+        if (aguaVal > 0 && cocaVal > 0) ambos++;
+        else if (aguaVal > 0) agua++;
+        else if (cocaVal > 0) coca++;
+        else nenhum++;
+      }
+
+      linha.forEach(celula => {
+        const el = document.createElement(i === 0 ? 'th' : 'td');
+        const valor = celula.trim().toLowerCase();
+
+        const ehBooleano =
+          valor === 'true' || valor === 'false' ||
+          valor === 'sim' || valor === 'não';
+
+        if (i > 0 && ehBooleano) {
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = valor === 'true' || valor === 'sim';
+          checkbox.disabled = true;
+          el.appendChild(checkbox);
+        } else {
+          el.textContent = celula;
+        }
+
+        tr.appendChild(el);
+      });
+
+      tabela.appendChild(tr);
+    });
+
+    criarGrafico(agua, coca, ambos, nenhum);
+  })
+  .catch(error => console.error('Erro ao carregar planilha:', error));
+
+function criarGrafico(agua, coca, ambos, nenhum) {
+  const ctx = document.getElementById('graficoPizza');
+
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: ['Água', 'Coca', 'Água + Coca', 'Nenhum'],
+      datasets: [{
+        data: [agua, coca, ambos, nenhum],
+        backgroundColor: [
+          '#4FC3F7',
+          '#E57373',
+          '#FFD54F',
+          '#BDBDBD'
+        ]
+      }]
+    },
+    options: {
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+}
+</script>
+
+</body>
+</html>

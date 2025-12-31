@@ -1,0 +1,87 @@
+
+body{
+       font-size: 12pt;
+       font-family: "Rubik", sans-serif;
+       padding: 16px;
+       background: #FEFAE0;
+       background: radial-gradient(circle, rgba(254, 250, 224, 1) 0%, rgba(250, 239, 208, 1) 100%);
+       line-height: 1.5;
+       margin: 0 auto;
+       max-width: 1200px;
+       padding: 2em 1.5em 1em;
+}
+
+/* Bordas arredondas da tabela */
+      
+      /* Canto superior esquerdo */
+table tr:first-child th:first-child {
+  border-top-left-radius: 12px;
+}
+
+/* Canto superior direito */
+table tr:first-child th:last-child {
+  border-top-right-radius: 12px;
+}
+
+/* Canto inferior esquerdo */
+table tr:last-child td:first-child {
+  border-bottom-left-radius: 12px;
+}
+
+/* Canto inferior direito */
+table tr:last-child td:last-child {
+  border-bottom-right-radius: 12px;
+}
+
+/* ===================================== */
+
+    table {
+      border: 2px solid #606c38;
+      border-spacing: 0px;
+      width: 100%;
+      border-radius: 14px;
+      box-shadow: 0 8px #bc6c25;
+    }
+      
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+            
+    
+    th {
+      background-color: #606c38;
+      font-family: "Merriweather", sans-serif;
+      color: white;
+      padding: 12px;
+    }
+      
+    tr:nth-child(even) {
+        background-color: rgb(221, 161, 94);
+        color: #FEFAE0
+      }
+
+    tr:nth-child(odd) {
+        background-color: #FEFAE0;
+        color: #606c38
+      }
+
+/* ===================================== */      
+
+    h1{
+      font-family: "Merriweather", sans-serif;
+      color: #606c38;
+       
+      }
+      
+    a{
+      color: #606c38;
+      
+      }
+      
+	.visual-checkbox {
+	  transform: scale(1.2);
+	  pointer-events: none;  /* impede clique */
+	  cursor: default;       /* cursor normal */
+	  accent-color: #bc6c25; /* cor azul (ou outra) */
+	}
